@@ -24,7 +24,7 @@ func CreateUser(userStore domain.UserStorer) http.HandlerFunc {
 		req := &createUserRequest{}
 		err := json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
-			respondError(w, http.StatusBadRequest, fmt.Errorf("decoding request body: %w", err))
+			respondError(w, r, http.StatusBadRequest, fmt.Errorf("decoding request body: %w", err))
 			return
 		}
 
@@ -37,11 +37,11 @@ func CreateUser(userStore domain.UserStorer) http.HandlerFunc {
 
 		err = userStore.Save(ctx, user)
 		if err != nil {
-			respondError(w, http.StatusBadRequest, fmt.Errorf("saving user: %w", err))
+			respondError(w, r, http.StatusBadRequest, fmt.Errorf("saving user: %w", err))
 			return
 		}
 
-		respond(w, http.StatusOK, nil)
+		respondJSON(w, http.StatusCreated, nil)
 	}
 }
 
@@ -62,7 +62,7 @@ func GetUsers(userStore domain.UserStorer) http.HandlerFunc {
 
 		users, err := userStore.Find(ctx)
 		if err != nil {
-			respondError(w, http.StatusInternalServerError, fmt.Errorf("finding users: %w", err))
+			respondError(w, r, http.StatusInternalServerError, fmt.Errorf("finding users: %w", err))
 			return
 		}
 
@@ -77,7 +77,7 @@ func GetUsers(userStore domain.UserStorer) http.HandlerFunc {
 			})
 		}
 
-		respond(w, http.StatusOK, res)
+		respondJSON(w, http.StatusOK, res)
 	}
 }
 
@@ -90,11 +90,11 @@ func GetUserByID(userStore domain.UserStorer) http.HandlerFunc {
 		entity, err := userStore.FindByID(ctx, id)
 		if err != nil {
 			if errors.Is(err, domain.ErrNotFound) {
-				respondError(w, http.StatusNotFound, err)
+				respondError(w, r, http.StatusNotFound, err)
 				return
 			}
 
-			respondError(w, http.StatusInternalServerError, fmt.Errorf("finding users: %w", err))
+			respondError(w, r, http.StatusInternalServerError, fmt.Errorf("finding users: %w", err))
 			return
 		}
 
@@ -105,6 +105,6 @@ func GetUserByID(userStore domain.UserStorer) http.HandlerFunc {
 			Email:     entity.Email,
 		}
 
-		respond(w, http.StatusOK, user)
+		respondJSON(w, http.StatusOK, user)
 	}
 }
