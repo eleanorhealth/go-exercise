@@ -75,16 +75,3 @@ Example output of `/locations` given three users with the zipcode `02210`, two u
     "userCount": 1
 }
 ```
-
-### A better user store
-
-Add an additional implementation of `domain.UserStorer` to the `storage` package for a database of your choice (e.g., SQLite, MySQL, Postgres, MongoDB, etc.).
-
-[domain/store.go](domain/store.go):
-```go
-type UserStorer interface {
-	Find(context.Context) ([]*User, error)
-	FindByID(context.Context, string) (*User, error)
-	Save(context.Context, *User) error
-}
-```
