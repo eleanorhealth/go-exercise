@@ -1,7 +1,15 @@
 # go-exercise
 
+## Getting Started
+
+### Running the app
 ```bash
 $ go run cmd/server/main.go
+```
+
+### Tests
+```bash
+$ go test -v ./...
 ```
 
 ## Tasks
