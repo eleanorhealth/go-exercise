@@ -15,7 +15,7 @@ const (
 )
 
 func main() {
-	userStore := memory.NewUserStore()
+	store := memory.NewStore()
 
 	r := chi.NewRouter()
 
@@ -23,9 +23,9 @@ func main() {
 	r.Use(middleware.Logger)
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Post("/users", api.CreateUser(userStore))
-		r.Get("/users", api.GetUsers(userStore))
-		r.Get("/users/{id}", api.GetUserByID(userStore))
+		r.Post("/users", api.CreateUser(store))
+		r.Get("/users", api.GetUsers(store))
+		r.Get("/users/{id}", api.GetUserByID(store))
 	})
 
 	log.Printf("Starting HTTP server at %s\n", httpAddr)

@@ -17,7 +17,7 @@ type createUserRequest struct {
 	Email     string `json:"email"`
 }
 
-func CreateUser(userStore domain.UserStorer) http.HandlerFunc {
+func CreateUser(store domain.Storer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -35,7 +35,7 @@ func CreateUser(userStore domain.UserStorer) http.HandlerFunc {
 			Email:     req.Email,
 		}
 
-		err = userStore.Save(ctx, user)
+		err = store.Users().Save(ctx, user)
 		if err != nil {
 			respondError(w, r, http.StatusBadRequest, fmt.Errorf("saving user: %w", err))
 			return
@@ -56,11 +56,11 @@ type getUsersResponse struct {
 	Users []*user `json:"users"`
 }
 
-func GetUsers(userStore domain.UserStorer) http.HandlerFunc {
+func GetUsers(store domain.Storer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		users, err := userStore.Find(ctx)
+		users, err := store.Users().Find(ctx)
 		if err != nil {
 			respondError(w, r, http.StatusInternalServerError, fmt.Errorf("finding users: %w", err))
 			return
@@ -81,13 +81,13 @@ func GetUsers(userStore domain.UserStorer) http.HandlerFunc {
 	}
 }
 
-func GetUserByID(userStore domain.UserStorer) http.HandlerFunc {
+func GetUserByID(store domain.Storer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		id := chi.URLParam(r, "id")
 
-		entity, err := userStore.FindByID(ctx, id)
+		entity, err := store.Users().FindByID(ctx, id)
 		if err != nil {
 			if errors.Is(err, domain.ErrNotFound) {
 				respondError(w, r, http.StatusNotFound, err)

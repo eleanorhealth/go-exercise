@@ -7,29 +7,10 @@ import (
 	"testing"
 
 	"github.com/eleanorhealth/go-exercise/domain"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
-
-type mockUserStore struct {
-	domain.UserStorer
-
-	findMock     func(context.Context) ([]*domain.User, error)
-	findByIDMock func(context.Context, string) (*domain.User, error)
-	saveMock     func(context.Context, *domain.User) error
-}
-
-func (m *mockUserStore) Find(ctx context.Context) ([]*domain.User, error) {
-	return m.findMock(ctx)
-}
-
-func (m *mockUserStore) FindByID(ctx context.Context, id string) (*domain.User, error) {
-	return m.findByIDMock(ctx, id)
-}
-
-func (m *mockUserStore) Save(ctx context.Context, user *domain.User) error {
-	return m.saveMock(ctx, user)
-}
 
 func TestGetUsers(t *testing.T) {
 	assert := assert.New(t)
@@ -69,12 +50,13 @@ func TestGetUsers(t *testing.T) {
 		},
 	}
 
-	userStore := &mockUserStore{}
-	userStore.findMock = func(ctx context.Context) ([]*domain.User, error) {
-		return entities, nil
-	}
+	store := domain.NewMockStore(t)
+	userStore := domain.NewMockUserStore(t)
 
-	GetUsers(userStore)(rr, r)
+	store.On("Users").Return(userStore).Once()
+	userStore.On("Find", r.Context()).Return(entities, nil).Once()
+
+	GetUsers(store)(rr, r)
 
 	res := &getUsersResponse{}
 	err := json.Unmarshal(rr.Body.Bytes(), res)
@@ -103,12 +85,20 @@ func TestGetUserByID(t *testing.T) {
 		Email:     entity.Email,
 	}
 
-	userStore := &mockUserStore{}
-	userStore.findByIDMock = func(ctx context.Context, id string) (*domain.User, error) {
-		return entity, nil
-	}
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, &chi.Context{
+		URLParams: chi.RouteParams{
+			Keys:   []string{"id"},
+			Values: []string{entity.ID},
+		},
+	}))
 
-	GetUserByID(userStore)(rr, r)
+	store := domain.NewMockStore(t)
+	userStore := domain.NewMockUserStore(t)
+
+	store.On("Users").Return(userStore).Once()
+	userStore.On("FindByID", r.Context(), entity.ID).Return(entity, nil).Once()
+
+	GetUserByID(store)(rr, r)
 
 	res := &user{}
 	err := json.Unmarshal(rr.Body.Bytes(), res)
